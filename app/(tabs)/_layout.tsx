@@ -2,13 +2,13 @@
 import React from 'react';
 import { Stack } from 'expo-router';
 import FloatingTabBar, { TabBarItem } from '@/components/FloatingTabBar';
-import { colors } from '@/styles/commonStyles';
+import { Colors } from '@/styles/commonStyles';
 
 export default function TabLayout() {
   const tabs: TabBarItem[] = [
     {
       name: '(home)',
-      route: '/(tabs)/(home)/',
+      route: '/(tabs)/(home)',
       icon: 'home',
       label: 'Home',
     },
@@ -27,7 +27,7 @@ export default function TabLayout() {
     {
       name: 'venues',
       route: '/(tabs)/venues',
-      icon: 'location_city',
+      icon: 'location-city',
       label: 'Venues',
     },
     {

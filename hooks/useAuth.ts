@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/app/integrations/supabase/client';
+import { supabase } from '../lib/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import { Alert } from 'react-native';
 

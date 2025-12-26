@@ -19,10 +19,10 @@ export default function HomeScreen() {
   ];
 
   const quickActions = [
-    { title: 'New Event', icon: 'add_circle', route: '/(tabs)/events', ios_icon: 'plus.circle.fill', color: Colors.primary },
-    { title: 'Add Client', icon: 'person_add', route: '/(tabs)/clients', ios_icon: 'person.badge.plus', color: Colors.accent },
+    { title: 'New Event', icon: 'add-circle', route: '/(tabs)/events', ios_icon: 'plus.circle.fill', color: Colors.primary },
+    { title: 'Add Client', icon: 'person-add', route: '/(tabs)/clients', ios_icon: 'person.badge.plus', color: Colors.accent },
     { title: 'Browse Providers', icon: 'search', route: '/(tabs)/providers', ios_icon: 'magnifyingglass', color: Colors.highlight },
-    { title: 'View Calendar', icon: 'calendar_month', route: '/(tabs)/events', ios_icon: 'calendar', color: Colors.secondary },
+    { title: 'View Calendar', icon: 'calendar-month', route: '/(tabs)/events', ios_icon: 'calendar', color: Colors.secondary },
   ];
 
   return (

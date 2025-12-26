@@ -30,6 +30,8 @@ export default function ProvidersScreen() {
 
   const serviceTypes: Array<ServiceType | 'all'> = ['all', 'photographer', 'videographer', 'drone_operator', 'caterer', 'dj', 'decorator'];
 
+  const hasManyProviders = filteredProviders.length > 2;
+
   if (selectedProvider) {
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
@@ -115,7 +117,13 @@ export default function ProvidersScreen() {
           )}
         </View>
 
-        <View style={styles.bottomPadding} />
+        <View
+          style={
+            hasManyProviders
+              ? styles.bottomPaddingLarge
+              : styles.bottomPaddingSmall
+          }
+        />
       </ScrollView>
     );
   }
@@ -180,7 +188,13 @@ export default function ProvidersScreen() {
             </View>
           </TouchableOpacity>
         ))}
-        <View style={styles.bottomPadding} />
+        <View
+          style={
+            hasManyProviders
+              ? styles.bottomPaddingLarge
+              : styles.bottomPaddingSmall
+          }
+        />
       </ScrollView>
     </View>
   );
@@ -240,6 +254,8 @@ const styles = StyleSheet.create({
     marginRight: 8,
     borderWidth: 1,
     borderColor: Colors.border,
+    marginBottom: 20,
+    height: 40,
   },
   filterChipActive: {
     backgroundColor: Colors.primary,
@@ -277,7 +293,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: Colors.text,
-    marginBottom: 4,
+    marginBottom: 5,
   },
   providerCardType: {
     fontSize: 14,
@@ -441,7 +457,10 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     fontStyle: 'italic',
   },
-  bottomPadding: {
-    height: 100,
+  bottomPaddingLarge: {
+    height: 140,
+  },
+  bottomPaddingSmall: {
+    height: 600,
   },
 });

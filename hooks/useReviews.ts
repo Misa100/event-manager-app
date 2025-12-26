@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/app/integrations/supabase/client';
-import { Tables, TablesInsert } from '@/app/integrations/supabase/types';
+import { supabase } from '../lib/supabase/client';
+import { Tables, TablesInsert } from '../lib/supabase/types';
 
 type Review = Tables<'reviews'>;
 type ReviewInsert = TablesInsert<'reviews'>;

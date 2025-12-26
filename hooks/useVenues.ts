@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/app/integrations/supabase/client';
-import { Tables, TablesInsert, TablesUpdate } from '@/app/integrations/supabase/types';
+import { supabase } from '../lib/supabase/client';
+import { Tables, TablesInsert, TablesUpdate } from '../lib/supabase/types';
 
 type Venue = Tables<'venues'>;
 type VenueInsert = TablesInsert<'venues'>;
