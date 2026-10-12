@@ -2,7 +2,7 @@
 
 Application d'organisation d'événements (mariages, anniversaires, événements d'entreprise) : clients, prestataires, lieux et événements. Une seule base de code Expo / React Native pour le web, iOS et Android, avec Supabase comme backend.
 
-> État actuel : baseline **v0**. L'authentification est complète (Supabase) ; les écrans métier utilisent encore des données factices. Détails dans [`docs/`](./docs/README.md).
+> État actuel : évolution de la baseline **v0** (voir le changelog). L'authentification et la lecture des données passent par Supabase ; il reste les écritures (formulaires de création et d'édition). Détails dans [`docs/`](./docs/README.md).
 
 ## Démarrage
 

@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Image } from 'react-native';
 import { Colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
-import { mockServiceProviders } from '@/data/mockData';
+import { useServiceProviders } from '@/hooks/useServiceProviders';
+import { dataStatusView, ListEmpty } from '@/components/DataStatus';
 import { ServiceProvider, ServiceType } from '@/types';
 
 const serviceTypeLabels: Record<ServiceType, string> = {
@@ -16,12 +17,17 @@ const serviceTypeLabels: Record<ServiceType, string> = {
   decorator: 'Decorator',
 };
 
+// The database stores the type as free text, so fall back to a readable version of it.
+const serviceTypeLabel = (type: string) =>
+  serviceTypeLabels[type as ServiceType] ?? type.replace(/_/g, ' ');
+
 export default function ProvidersScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<ServiceType | 'all'>('all');
   const [selectedProvider, setSelectedProvider] = useState<ServiceProvider | null>(null);
+  const { providers, loading, error, fetchProviders } = useServiceProviders();
 
-  const filteredProviders = mockServiceProviders.filter(provider => {
+  const filteredProviders = providers.filter(provider => {
     const matchesSearch = provider.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       provider.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = selectedType === 'all' || provider.serviceType === selectedType;
@@ -31,6 +37,14 @@ export default function ProvidersScreen() {
   const serviceTypes: Array<ServiceType | 'all'> = ['all', 'photographer', 'videographer', 'drone_operator', 'caterer', 'dj', 'decorator'];
 
   const hasManyProviders = filteredProviders.length > 2;
+
+  const status = dataStatusView({
+    loading,
+    error,
+    hasData: providers.length > 0,
+    onRetry: () => fetchProviders(),
+  });
+  if (status) return status;
 
   if (selectedProvider) {
     return (
@@ -50,7 +64,7 @@ export default function ProvidersScreen() {
             <IconSymbol ios_icon_name="star.fill" android_material_icon_name="star" size={20} color={Colors.highlight} />
             <Text style={styles.ratingText}>{selectedProvider.rating.toFixed(1)}</Text>
           </View>
-          <Text style={styles.serviceTypeBadge}>{serviceTypeLabels[selectedProvider.serviceType]}</Text>
+          <Text style={styles.serviceTypeBadge}>{serviceTypeLabel(selectedProvider.serviceType)}</Text>
         </View>
 
         {selectedProvider.portfolio.length > 0 && (
@@ -162,6 +176,9 @@ export default function ProvidersScreen() {
       </ScrollView>
 
       <ScrollView contentContainerStyle={styles.listContainer}>
+        {filteredProviders.length === 0 && (
+          <ListEmpty message={providers.length === 0 ? 'No service providers yet.' : 'No providers match your search.'} />
+        )}
         {filteredProviders.map((provider, index) => (
           <TouchableOpacity
             key={index}
@@ -172,7 +189,7 @@ export default function ProvidersScreen() {
             <View style={styles.providerCardHeader}>
               <View style={styles.providerCardInfo}>
                 <Text style={styles.providerCardName}>{provider.name}</Text>
-                <Text style={styles.providerCardType}>{serviceTypeLabels[provider.serviceType]}</Text>
+                <Text style={styles.providerCardType}>{serviceTypeLabel(provider.serviceType)}</Text>
               </View>
               <View style={styles.providerRating}>
                 <IconSymbol ios_icon_name="star.fill" android_material_icon_name="star" size={16} color={Colors.highlight} />

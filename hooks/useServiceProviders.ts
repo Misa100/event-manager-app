@@ -1,9 +1,11 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase/client';
-import { Tables, TablesInsert, TablesUpdate } from '../lib/supabase/types';
+import { TablesInsert, TablesUpdate } from '../lib/supabase/types';
+import { PROVIDER_SELECT, ProviderRow, mapServiceProvider } from '../lib/mappers';
+import type { ServiceProvider } from '../types';
 
-type ServiceProvider = Tables<'service_providers'>;
+
 type ServiceProviderInsert = TablesInsert<'service_providers'>;
 type ServiceProviderUpdate = TablesUpdate<'service_providers'>;
 
@@ -19,7 +21,7 @@ export function useServiceProviders() {
       
       let query = supabase
         .from('service_providers')
-        .select('*')
+        .select(PROVIDER_SELECT)
         .order('rating', { ascending: false });
 
       if (serviceType) {
@@ -35,7 +37,7 @@ export function useServiceProviders() {
       }
 
       console.log('[useServiceProviders] Fetched providers:', data?.length);
-      setProviders(data || []);
+      setProviders(((data ?? []) as ProviderRow[]).map(mapServiceProvider));
       setError(null);
     } catch (err) {
       console.error('[useServiceProviders] Fetch exception:', err);

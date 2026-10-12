@@ -1,9 +1,11 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase/client';
-import { Tables, TablesInsert, TablesUpdate } from '../lib/supabase/types';
+import { TablesInsert, TablesUpdate } from '../lib/supabase/types';
+import { EVENT_SELECT, EventRow, mapEvent } from '../lib/mappers';
+import type { Event } from '../types';
 
-type Event = Tables<'events'>;
+
 type EventInsert = TablesInsert<'events'>;
 type EventUpdate = TablesUpdate<'events'>;
 
@@ -18,7 +20,7 @@ export function useEvents() {
       setLoading(true);
       const { data, error } = await supabase
         .from('events')
-        .select('*')
+        .select(EVENT_SELECT)
         .order('date', { ascending: true });
 
       if (error) {
@@ -28,7 +30,7 @@ export function useEvents() {
       }
 
       console.log('[useEvents] Fetched events:', data?.length);
-      setEvents(data || []);
+      setEvents(((data ?? []) as EventRow[]).map(mapEvent));
       setError(null);
     } catch (err) {
       console.error('[useEvents] Fetch exception:', err);

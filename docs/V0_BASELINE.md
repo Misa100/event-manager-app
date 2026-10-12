@@ -58,8 +58,8 @@ Ordre proposé, chaque étape livrable seule. Aucune n'est lancée.
 2. ✅ **Assainir la config** (voir `CHANGELOG.md`) : noms/identifiants uniques, variables d'environnement pour Supabase, alias, README et `BACKEND_IMPLEMENTATION.md` corrigés.
 3. **Versionner le backend** : exporter les migrations et politiques RLS dans `supabase/migrations/` et les relire.
 4. ✅ **Auth de bout en bout** (voir `CHANGELOG.md` et `AUTH.md`) : garde de route, accès login / register / profil depuis l'UI, gestion du rôle.
-5. **Couche de mapping** base ↔ UI (`snake_case` → `camelCase`, prix imbriqués, relations).
-6. **Brancher les lectures** écran par écran (Clients → Venues → Providers → Events → Home), avec états de chargement et d'erreur.
+5. ✅ **Couche de mapping** base ↔ UI (`snake_case` → `camelCase`, prix imbriqués, relations).
+6. ✅ **Brancher les lectures** écran par écran (Clients → Venues → Providers → Events → Home), avec états de chargement et d'erreur.
 7. **Ajouter les écritures** (formulaires création / édition / suppression), puis tâches, timeline, réservations.
 8. **Routes de détail** (`/events/[id]`, etc.) pour avoir des URL partageables et le retour navigateur.
 9. **Nettoyer le code du template** et unifier les composants et le thème.

@@ -3,17 +3,27 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { Colors, commonStyles } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
-import { mockClients } from '@/data/mockData';
+import { useClients } from '@/hooks/useClients';
+import { dataStatusView, ListEmpty } from '@/components/DataStatus';
 import { Client } from '@/types';
 
 export default function ClientsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const { clients, loading, error, fetchClients } = useClients();
 
-  const filteredClients = mockClients.filter(client =>
+  const filteredClients = clients.filter(client =>
     client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     client.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const status = dataStatusView({
+    loading,
+    error,
+    hasData: clients.length > 0,
+    onRetry: () => fetchClients(),
+  });
+  if (status) return status;
 
   if (selectedClient) {
     return (
@@ -106,6 +116,9 @@ export default function ClientsScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.listContainer}>
+        {filteredClients.length === 0 && (
+          <ListEmpty message={searchQuery ? 'No clients match your search.' : 'No clients yet.'} />
+        )}
         {filteredClients.map((client, index) => (
           <TouchableOpacity
             key={index}

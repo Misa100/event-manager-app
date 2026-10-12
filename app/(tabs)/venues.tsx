@@ -3,17 +3,27 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Image } from 'react-native';
 import { Colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
-import { mockVenues } from '@/data/mockData';
+import { useVenues } from '@/hooks/useVenues';
+import { dataStatusView, ListEmpty } from '@/components/DataStatus';
 import { Venue } from '@/types';
 
 export default function VenuesScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
+  const { venues, loading, error, fetchVenues } = useVenues();
 
-  const filteredVenues = mockVenues.filter(venue =>
+  const filteredVenues = venues.filter(venue =>
     venue.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     venue.location.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const status = dataStatusView({
+    loading,
+    error,
+    hasData: venues.length > 0,
+    onRetry: () => fetchVenues(),
+  });
+  if (status) return status;
 
   if (selectedVenue) {
     return (
@@ -67,7 +77,9 @@ export default function VenuesScreen() {
             <Text style={styles.detailText}>
               {selectedVenue.pricing.perDay
                 ? `$${selectedVenue.pricing.perDay.toLocaleString()} per day`
-                : `$${selectedVenue.pricing.perHour?.toLocaleString()} per hour`}
+                : selectedVenue.pricing.perHour
+                  ? `$${selectedVenue.pricing.perHour.toLocaleString()} per hour`
+                  : 'Pricing on request'}
             </Text>
           </View>
         </View>
@@ -128,6 +140,9 @@ export default function VenuesScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.listContainer}>
+        {filteredVenues.length === 0 && (
+          <ListEmpty message={venues.length === 0 ? 'No venues yet.' : 'No venues match your search.'} />
+        )}
         {filteredVenues.map((venue, index) => (
           <TouchableOpacity
             key={index}

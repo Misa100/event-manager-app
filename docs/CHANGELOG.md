@@ -27,3 +27,16 @@ Détails des parcours et de la configuration : [`AUTH.md`](./AUTH.md).
 - **Profil** : la ligne `profiles` est lue après connexion, et créée à partir des métadonnées si elle manque ; l'insertion faite pendant l'inscription (sans session, donc refusée par une RLS correcte) est supprimée.
 - **Hygiène** : plus de `console.log` d'adresses e-mail dans `useAuth` ; `useAuth` renvoie des résultats typés (`AuthResult`) au lieu de `any`.
 - **Vérification** : 20 scénarios joués dans Chromium contre un backend Supabase simulé (redirections du garde, erreurs, inscription, connexion, persistance au rechargement, déconnexion, réinitialisation). Non testé contre le vrai projet Supabase (domaine bloqué depuis l'environnement de développement).
+
+## Étapes 5 et 6 – Mapping base ↔ UI et branchement des lectures
+
+Détails : [`DATA_MODEL.md`](./DATA_MODEL.md) §3 et §4.
+
+- **`lib/mappers.ts`** : conversion des lignes Supabase en types UI (casse, prix imbriqués, `null`, heures, JSON, valeurs libres) et chaînes `select` avec jointures (une requête par entité).
+- **Hooks de lecture** (`useClients`, `useServiceProviders`, `useVenues`, `useEvents`) : retournent des types UI avec leurs relations. Les mutations restent typées « base » (étape des écritures).
+- **Écrans branchés** : Home (statistiques et « Upcoming Events » = événements à venir, planning/confirmés, dans la limite de 3), Clients, Providers, Venues, Events (détail avec client, lieu et prestataires retrouvés par identifiant).
+- **États** : nouveau `components/DataStatus.tsx` — spinner au premier chargement, message + « Try again » en cas d'échec, messages de liste vide. Un échec de rafraîchissement garde les données déjà affichées.
+- **Affichage** : type de prestataire inconnu affiché en clair ; lieu sans tarif → « Pricing on request ».
+- **Suppression** de `data/mockData.ts` (plus utilisé).
+- **Vérification** : 19 scénarios dans Chromium contre un backend simulé au format PostgREST (jointures imbriquées, colonnes `null`, valeurs inconnues, tri, erreur puis nouvel essai, liste vide). Non testé contre le vrai projet Supabase (domaine inaccessible depuis l'environnement de développement) : les noms de colonnes et les relations viennent de `lib/supabase/types.ts`.
+- **À savoir** : base vide = écrans vides ; les lectures dépendent des politiques RLS (lecture ouverte aux utilisateurs authentifiés d'après `BACKEND_IMPLEMENTATION.md`, non vérifié).

@@ -1,9 +1,11 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase/client';
-import { Tables, TablesInsert, TablesUpdate } from '../lib/supabase/types';
+import { TablesInsert, TablesUpdate } from '../lib/supabase/types';
+import { CLIENT_SELECT, ClientRow, mapClient } from '../lib/mappers';
+import type { Client } from '../types';
 
-type Client = Tables<'clients'>;
+
 type ClientInsert = TablesInsert<'clients'>;
 type ClientUpdate = TablesUpdate<'clients'>;
 
@@ -18,7 +20,7 @@ export function useClients() {
       setLoading(true);
       const { data, error } = await supabase
         .from('clients')
-        .select('*')
+        .select(CLIENT_SELECT)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -28,7 +30,7 @@ export function useClients() {
       }
 
       console.log('[useClients] Fetched clients:', data?.length);
-      setClients(data || []);
+      setClients(((data ?? []) as ClientRow[]).map(mapClient));
       setError(null);
     } catch (err) {
       console.error('[useClients] Fetch exception:', err);

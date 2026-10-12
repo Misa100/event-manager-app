@@ -44,12 +44,12 @@ app/                         Routes (expo-router)
 
 components/                  Composants partagés (voir §6), dont AuthUI.tsx (écrans d'auth)
 contexts/                    AuthContext (utilisé), WidgetContext (template, inutilisé)
-hooks/                       useAuth + hooks de données Supabase (voir DATA_MODEL.md)
+hooks/                       useAuth + hooks de données Supabase, lecture en types UI (voir DATA_MODEL.md)
 lib/config.ts                Variables d'environnement EXPO_PUBLIC_*
 lib/auth.ts                  Rôles, validation, messages d'erreur d'auth
+lib/mappers.ts               Conversion lignes de la base → types UI (+ select avec jointures)
 lib/supabase/                client.ts (instance Supabase), types.ts (types générés)
 types/index.ts               Types métier côté UI (camelCase, objets imbriqués)
-data/mockData.ts             Données factices alimentant les écrans métier
 styles/commonStyles.ts       Palette `Colors` + styles communs (utilisés par les écrans)
 constants/Colors.ts          Palette du template (thèmes clair/sombre), peu utilisée
 utils/errorLogger.ts         Logger d'erreurs du template (non importé)
@@ -92,6 +92,7 @@ Voir [`AUTH.md`](./AUTH.md) : parcours, garde de route, code, configuration Supa
 | `FloatingTabBar` | Barre d'onglets flottante (web/Android) | `(tabs)/_layout.tsx` |
 | `IconSymbol` (+ `.ios`) | Icône multiplateforme (SF Symbols / Material) | tous les écrans |
 | `DemoCard`, `HeaderButtons`, `homeData` | Démo de modales du template | `index.ios.tsx` |
+| `DataStatus` | Chargement / erreur avec « Try again » / liste vide des écrans de données | Home, Clients, Providers, Venues, Events |
 | `AuthUI` | Gabarit et briques des écrans d'authentification | `auth/*`, `reset-password`, `email-confirmed` |
 | `ListItem`, `IconCircle`, `button`, `BodyScrollView` | Briques génériques du template | `ListItem` → `IconCircle` ; les autres ne sont importées nulle part |
 

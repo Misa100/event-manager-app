@@ -1,9 +1,11 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase/client';
-import { Tables, TablesInsert, TablesUpdate } from '../lib/supabase/types';
+import { TablesInsert, TablesUpdate } from '../lib/supabase/types';
+import { VENUE_SELECT, VenueRow, mapVenue } from '../lib/mappers';
+import type { Venue } from '../types';
 
-type Venue = Tables<'venues'>;
+
 type VenueInsert = TablesInsert<'venues'>;
 type VenueUpdate = TablesUpdate<'venues'>;
 
@@ -18,7 +20,7 @@ export function useVenues() {
       setLoading(true);
       const { data, error } = await supabase
         .from('venues')
-        .select('*')
+        .select(VENUE_SELECT)
         .order('rating', { ascending: false });
 
       if (error) {
@@ -28,7 +30,7 @@ export function useVenues() {
       }
 
       console.log('[useVenues] Fetched venues:', data?.length);
-      setVenues(data || []);
+      setVenues(((data ?? []) as VenueRow[]).map(mapVenue));
       setError(null);
     } catch (err) {
       console.error('[useVenues] Fetch exception:', err);

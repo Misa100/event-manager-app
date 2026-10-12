@@ -3,7 +3,11 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { Colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
-import { mockEvents, mockClients, mockVenues, mockServiceProviders } from '@/data/mockData';
+import { useEvents } from '@/hooks/useEvents';
+import { useClients } from '@/hooks/useClients';
+import { useVenues } from '@/hooks/useVenues';
+import { useServiceProviders } from '@/hooks/useServiceProviders';
+import { dataStatusView, ListEmpty } from '@/components/DataStatus';
 import { Event } from '@/types';
 
 const eventTypeLabels = {
@@ -23,14 +27,26 @@ const statusColors = {
 export default function EventsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const { events, loading: eventsLoading, error: eventsError, fetchEvents } = useEvents();
+  const { clients } = useClients();
+  const { venues } = useVenues();
+  const { providers } = useServiceProviders();
 
-  const filteredEvents = mockEvents.filter(event =>
+  const filteredEvents = events.filter(event =>
     event.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const status = dataStatusView({
+    loading: eventsLoading,
+    error: eventsError,
+    hasData: events.length > 0,
+    onRetry: () => fetchEvents(),
+  });
+  if (status) return status;
+
   if (selectedEvent) {
-    const client = mockClients.find(c => c.id === selectedEvent.clientId);
-    const venue = mockVenues.find(v => v.id === selectedEvent.venueId);
+    const client = clients.find(c => c.id === selectedEvent.clientId);
+    const venue = venues.find(v => v.id === selectedEvent.venueId);
 
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
@@ -96,7 +112,7 @@ export default function EventsScreen() {
           <Text style={styles.detailLabel}>Assigned Providers ({selectedEvent.assignedProviders.length})</Text>
           {selectedEvent.assignedProviders.length > 0 ? (
             selectedEvent.assignedProviders.map((ap, index) => {
-              const provider = mockServiceProviders.find(p => p.id === ap.providerId);
+              const provider = providers.find(p => p.id === ap.providerId);
               return (
                 <View key={index} style={styles.providerItem}>
                   <Text style={styles.providerName}>{provider?.name || 'Unknown'}</Text>
@@ -181,6 +197,9 @@ export default function EventsScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.listContainer}>
+        {filteredEvents.length === 0 && (
+          <ListEmpty message={events.length === 0 ? 'No events yet.' : 'No events match your search.'} />
+        )}
         {filteredEvents.map((event, index) => (
           <TouchableOpacity
             key={index}

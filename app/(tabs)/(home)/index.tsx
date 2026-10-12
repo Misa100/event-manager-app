@@ -4,18 +4,40 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from
 import { useRouter } from 'expo-router';
 import { Colors, commonStyles } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
-import { mockEvents, mockClients, mockServiceProviders, mockVenues } from '@/data/mockData';
+import { useEvents } from '@/hooks/useEvents';
+import { useClients } from '@/hooks/useClients';
+import { useServiceProviders } from '@/hooks/useServiceProviders';
+import { useVenues } from '@/hooks/useVenues';
+import { dataStatusView, ListEmpty } from '@/components/DataStatus';
 
 const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { events, loading: eventsLoading, error: eventsError, fetchEvents } = useEvents();
+  const { clients } = useClients();
+  const { providers } = useServiceProviders();
+  const { venues } = useVenues();
+
+  const status = dataStatusView({
+    loading: eventsLoading,
+    error: eventsError,
+    hasData: events.length > 0 || clients.length > 0 || providers.length > 0 || venues.length > 0,
+    onRetry: () => fetchEvents(),
+  });
+  if (status) return status;
+
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const upcomingEvents = events
+    .filter(e => e.date >= today && (e.status === 'planning' || e.status === 'confirmed'))
+    .slice(0, 3);
 
   const stats = [
-    { label: 'Active Events', value: mockEvents.filter(e => e.status === 'planning' || e.status === 'confirmed').length, color: Colors.primary },
-    { label: 'Total Clients', value: mockClients.length, color: Colors.accent },
-    { label: 'Service Providers', value: mockServiceProviders.length, color: Colors.highlight },
-    { label: 'Venues', value: mockVenues.length, color: Colors.secondary },
+    { label: 'Active Events', value: events.filter(e => e.status === 'planning' || e.status === 'confirmed').length, color: Colors.primary },
+    { label: 'Total Clients', value: clients.length, color: Colors.accent },
+    { label: 'Service Providers', value: providers.length, color: Colors.highlight },
+    { label: 'Venues', value: venues.length, color: Colors.secondary },
   ];
 
   const quickActions = [
@@ -65,7 +87,8 @@ export default function HomeScreen() {
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Upcoming Events</Text>
-        {mockEvents.slice(0, 3).map((event, index) => (
+        {upcomingEvents.length === 0 && <ListEmpty message="No upcoming events." />}
+        {upcomingEvents.map((event, index) => (
           <TouchableOpacity
             key={index}
             style={styles.eventCard}
