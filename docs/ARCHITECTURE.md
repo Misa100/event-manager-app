@@ -13,7 +13,7 @@
 | Build natif | EAS (`eas.json` : `development`, `preview`, `production`) |
 | Lint | ESLint (config Expo + TypeScript + React) |
 
-Identité : le projet porte plusieurs noms selon le fichier – `Event Manager` (UI et README), `Eventide Celebrations` (`app.json`), `Natively` (`package.json`, manifest PWA, bundle ID `com.anonymous.Natively`). Voir `V0_BASELINE.md`.
+Identité : « Event Manager » (voir `CHANGELOG.md` ; à la v0 le projet portait aussi les noms `Eventide Celebrations` et `Natively`).
 
 ## 2. Arborescence
 
@@ -43,6 +43,7 @@ app/                         Routes (expo-router)
 components/                  Composants partagés (voir §6)
 contexts/                    AuthContext (utilisé), WidgetContext (template, inutilisé)
 hooks/                       useAuth + hooks de données Supabase (voir DATA_MODEL.md)
+lib/config.ts                Variables d'environnement EXPO_PUBLIC_*
 lib/supabase/                client.ts (instance Supabase), types.ts (types générés)
 types/index.ts               Types métier côté UI (camelCase, objets imbriqués)
 data/mockData.ts             Données factices alimentant les écrans métier
@@ -52,7 +53,6 @@ utils/errorLogger.ts         Logger d'erreurs du template (non importé)
 babel-plugins/               Plugins « edit mode » de l'outil Natively (dev uniquement)
 public/                      index.html, manifest PWA, icônes
 supabase/config.toml         Seulement le project_id (pas de migrations versionnées)
-scripts/generate-readme.js   Génère le README racine depuis package.json
 ```
 
 Point d'entrée : `index.ts` → `expo-router/entry`.
@@ -106,8 +106,8 @@ Les écrans métier ne réutilisent pas ces briques : chacun définit ses propre
 
 ## 8. Configuration et build
 
-- **Alias** : `@/…` → racine du projet (défini dans `tsconfig.json` et `babel.config.js`). Les autres alias Babel (`@components`, `@hooks`, `@types`, `@contexts`, `@style`) ne sont pas déclarés dans `tsconfig.json` ; `@style` vise un dossier `./style` qui n'existe pas (le dossier réel est `styles/`).
-- **Scripts** (`package.json`) : `dev` (Expo avec tunnel), `android`, `ios`, `web`, `build:web` (`expo export -p web` puis Workbox), `build:android` (`expo prebuild`), `lint`, `readme`.
+- **Alias** : `@/…` → racine du projet (défini dans `tsconfig.json` et `babel.config.js`). C'est le seul alias.
+- **Scripts** (`package.json`) : `dev` (Expo avec tunnel), `android`, `ios`, `web`, `build:web` (`expo export -p web` puis Workbox), `build:android` (`expo prebuild`), `lint`.
 - **PWA** : `public/manifest.json` + `workbox-config.js` (stratégie `NetworkFirst` sur tout, `dist/sw.js`).
 - **Mode édition** : `babel.config.js` active les plugins `babel-plugins/*` seulement si `EXPO_PUBLIC_ENABLE_EDIT_MODE=TRUE` en développement (outil Natively).
-- **Supabase** : URL et clé publique (anon) sont écrites en dur dans `lib/supabase/client.ts`.
+- **Configuration runtime** : `lib/config.ts` lit `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY` et `EXPO_PUBLIC_SITE_URL` (voir `.env.example`), avec repli sur le projet actuel.

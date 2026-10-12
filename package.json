@@ -1,5 +1,5 @@
 {
-  "name": "Natively",
+  "name": "event-manager",
   "version": "1.0.0",
   "main": "index.ts",
   "scripts": {
@@ -9,8 +9,7 @@
     "web": "EXPO_NO_TELEMETRY=1 expo start --web",
     "build:web": "expo export -p web && npx workbox generateSW workbox-config.js",
     "build:android": "expo prebuild -p android",
-    "lint": "eslint .",
-    "readme": "node scripts/generate-readme.js"
+    "lint": "eslint ."
   },
   "dependencies": {
     "@babel/plugin-proposal-export-namespace-from": "^7.18.9",
@@ -21,7 +20,6 @@
     "@expo/vector-icons": "^15.0.2",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-native-community/datetimepicker": "^8.3.0",
-    "@react-native-community/picker": "^1.8.1",
     "@react-native-picker/picker": "^2.11.4",
     "@react-navigation/drawer": "^7.1.1",
     "@react-navigation/native": "^7.0.14",

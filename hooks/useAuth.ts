@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase/client';
+import { SITE_URL } from '../lib/config';
 import { Session, User } from '@supabase/supabase-js';
 import { Alert } from 'react-native';
 
@@ -38,7 +39,7 @@ export function useAuth() {
         email,
         password,
         options: {
-          emailRedirectTo: 'https://natively.dev/email-confirmed',
+          emailRedirectTo: `${SITE_URL}/email-confirmed`,
           data: {
             name,
             role,
@@ -132,7 +133,7 @@ export function useAuth() {
     try {
       console.log('[useAuth] Resetting password for:', email);
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'https://natively.dev/reset-password',
+        redirectTo: `${SITE_URL}/reset-password`,
       });
 
       if (error) {

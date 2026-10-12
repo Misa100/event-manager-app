@@ -8,7 +8,8 @@ Cette documentation décrit l'app **telle qu'elle est aujourd'hui** (baseline «
 |---|---|
 | [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Stack, arborescence, routing, variantes par plateforme, auth, styles, configuration |
 | [`DATA_MODEL.md`](./DATA_MODEL.md) | Schéma Supabase, types côté UI, écarts entre les deux, hooks de données |
-| [`V0_BASELINE.md`](./V0_BASELINE.md) | État fonctionnel de la v0, code template/mort, écarts de config, pistes d'étapes |
+| [`V0_BASELINE.md`](./V0_BASELINE.md) | État figé de la v0 (tag `v0`), code template/mort, écarts de config, pistes d'étapes |
+| [`CHANGELOG.md`](./CHANGELOG.md) | Ce qui a changé depuis la v0, étape par étape |
 
 ## En une phrase
 
@@ -16,5 +17,5 @@ App d'organisation d'événements (mariages, anniversaires, corporate) construit
 
 ## Autres fichiers à la racine
 
-- `README.md` : généré par `scripts/generate-readme.js`, très générique (ne reflète pas le projet).
-- `BACKEND_IMPLEMENTATION.md` : guide du backend Supabase (schéma, RLS, hooks). Voir les écarts relevés dans `V0_BASELINE.md`.
+- `README.md` : démarrage rapide et liens.
+- `BACKEND_IMPLEMENTATION.md` : guide du backend Supabase (schéma, RLS, hooks).

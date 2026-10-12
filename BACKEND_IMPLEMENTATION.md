@@ -144,8 +144,15 @@ To integrate the backend with your existing UI:
 
 ## Environment Variables
 
-The Supabase URL and anon key are already configured in:
-- `app/integrations/supabase/client.ts`
+The Supabase client is created in `lib/supabase/client.ts`, which reads its settings from `lib/config.ts`:
+
+| Variable | Role |
+|---|---|
+| `EXPO_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Public (anon) key, protected by RLS |
+| `EXPO_PUBLIC_SITE_URL` | Public URL of the web app, used in auth e-mail links |
+
+All three are optional: without them the app falls back to the current project. See `.env.example`.
 
 ## Database Migrations
 

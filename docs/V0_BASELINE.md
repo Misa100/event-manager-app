@@ -1,6 +1,6 @@
 # Baseline v0
 
-Photographie de l'app avant perfectionnement. Rien ici n'est une décision : ce sont des constats et des pistes pour avancer étape par étape.
+Photographie de l'app avant perfectionnement, figée au tag `v0` (les changements suivants sont dans `CHANGELOG.md`). Rien ici n'est une décision : ce sont des constats et des pistes pour avancer étape par étape.
 
 ## 1. Ce qui fonctionne
 
@@ -54,8 +54,8 @@ Photographie de l'app avant perfectionnement. Rien ici n'est une décision : ce 
 
 Ordre proposé, chaque étape livrable seule. Aucune n'est lancée.
 
-1. **Figer la base v0** : poser un tag git (`v0`) sur l'état documenté ici.
-2. **Assainir la config** : noms/identifiants uniques, variables d'environnement pour Supabase, alias, README et `BACKEND_IMPLEMENTATION.md` corrigés.
+1. ✅ **Figer la base v0** : poser un tag git (`v0`) sur l'état documenté ici.
+2. ✅ **Assainir la config** (voir `CHANGELOG.md`) : noms/identifiants uniques, variables d'environnement pour Supabase, alias, README et `BACKEND_IMPLEMENTATION.md` corrigés.
 3. **Versionner le backend** : exporter les migrations et politiques RLS dans `supabase/migrations/` et les relire.
 4. **Auth de bout en bout** : garde de route, accès login / register / profil depuis l'UI, gestion du rôle.
 5. **Couche de mapping** base ↔ UI (`snake_case` → `camelCase`, prix imbriqués, relations).
