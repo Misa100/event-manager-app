@@ -57,7 +57,7 @@ Ordre proposé, chaque étape livrable seule. Aucune n'est lancée.
 1. ✅ **Figer la base v0** : poser un tag git (`v0`) sur l'état documenté ici.
 2. ✅ **Assainir la config** (voir `CHANGELOG.md`) : noms/identifiants uniques, variables d'environnement pour Supabase, alias, README et `BACKEND_IMPLEMENTATION.md` corrigés.
 3. **Versionner le backend** : exporter les migrations et politiques RLS dans `supabase/migrations/` et les relire.
-4. **Auth de bout en bout** : garde de route, accès login / register / profil depuis l'UI, gestion du rôle.
+4. ✅ **Auth de bout en bout** (voir `CHANGELOG.md` et `AUTH.md`) : garde de route, accès login / register / profil depuis l'UI, gestion du rôle.
 5. **Couche de mapping** base ↔ UI (`snake_case` → `camelCase`, prix imbriqués, relations).
 6. **Brancher les lectures** écran par écran (Clients → Venues → Providers → Events → Home), avec états de chargement et d'erreur.
 7. **Ajouter les écritures** (formulaires création / édition / suppression), puis tâches, timeline, réservations.

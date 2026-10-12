@@ -26,6 +26,10 @@ export default function TabLayout() {
         <Icon sf="calendar" />
         <Label>Events</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger key="profile" name="profile">
+        <Icon sf="person.crop.circle.fill" />
+        <Label>Profile</Label>
+      </NativeTabs.Trigger>
     </NativeTabs>
   );
 }

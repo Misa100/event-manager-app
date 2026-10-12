@@ -7,6 +7,7 @@ Cette documentation décrit l'app **telle qu'elle est aujourd'hui** (baseline «
 | Document | Contenu |
 |---|---|
 | [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Stack, arborescence, routing, variantes par plateforme, auth, styles, configuration |
+| [`AUTH.md`](./AUTH.md) | Parcours d'authentification, garde de route, configuration Supabase, sécurité |
 | [`DATA_MODEL.md`](./DATA_MODEL.md) | Schéma Supabase, types côté UI, écarts entre les deux, hooks de données |
 | [`V0_BASELINE.md`](./V0_BASELINE.md) | État figé de la v0 (tag `v0`), code template/mort, écarts de config, pistes d'étapes |
 | [`CHANGELOG.md`](./CHANGELOG.md) | Ce qui a changé depuis la v0, étape par étape |

@@ -1,30 +1,27 @@
-
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  ActivityIndicator,
-} from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthContext } from '@/contexts/AuthContext';
-import { Colors } from '@/styles/commonStyles';
+import { isValidEmail } from '@/lib/auth';
+import { AuthButton, AuthInput, AuthLink, AuthMessage, AuthScreen } from '@/components/AuthUI';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { signIn, loading: authLoading } = useAuthContext();
+  const { signIn, resendConfirmation } = useAuthContext();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
+  const [canResend, setCanResend] = useState(false);
 
+  // On success the route guard in app/_layout.tsx moves the user to the app.
   const handleLogin = async () => {
-    if (!email || !password) {
-      console.log('[LoginScreen] Missing email or password');
+    setError(null);
+    setInfo(null);
+    setCanResend(false);
+
+    if (!isValidEmail(email) || !password) {
+      setError('Enter your email and password.');
       return;
     }
 
@@ -32,143 +29,65 @@ export default function LoginScreen() {
     const result = await signIn(email, password);
     setLoading(false);
 
-    if (result.success) {
-      console.log('[LoginScreen] Login successful, navigating to home');
-      router.replace('/(tabs)');
+    if (!result.success) {
+      setError(result.error ?? 'Unable to sign in.');
+      setCanResend(!!result.needsEmailConfirmation);
     }
   };
 
-  if (authLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
-    );
-  }
+  const handleResend = async () => {
+    setLoading(true);
+    const result = await resendConfirmation(email);
+    setLoading(false);
+
+    if (result.success) {
+      setError(null);
+      setCanResend(false);
+      setInfo('Confirmation email sent. Check your inbox.');
+    } else {
+      setError(result.error ?? 'Unable to send the email.');
+    }
+  };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.content}>
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Sign in to continue</Text>
+    <AuthScreen title="Welcome Back" subtitle="Sign in to continue">
+      {error ? <AuthMessage kind="error">{error}</AuthMessage> : null}
+      {info ? <AuthMessage kind="success">{info}</AuthMessage> : null}
 
-          <View style={styles.form}>
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              placeholderTextColor={Colors.textSecondary}
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              editable={!loading}
-            />
+      <AuthInput
+        placeholder="Email"
+        value={email}
+        onChangeText={setEmail}
+        autoCapitalize="none"
+        autoComplete="email"
+        keyboardType="email-address"
+        editable={!loading}
+      />
+      <AuthInput
+        placeholder="Password"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        autoComplete="current-password"
+        editable={!loading}
+        onSubmitEditing={handleLogin}
+      />
 
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor={Colors.textSecondary}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              editable={!loading}
-            />
+      <AuthButton label="Sign In" onPress={handleLogin} loading={loading} />
 
-            <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
-              onPress={handleLogin}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <Text style={styles.buttonText}>Sign In</Text>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.linkButton}
-              onPress={() => router.push('/auth/register')}
-              disabled={loading}
-            >
-              <Text style={styles.linkText}>
-                Don&apos;t have an account? Sign Up
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      {canResend ? (
+        <AuthLink label="Resend confirmation email" onPress={handleResend} disabled={loading} />
+      ) : null}
+      <AuthLink
+        label="Forgot your password?"
+        onPress={() => router.push('/auth/forgot-password')}
+        disabled={loading}
+      />
+      <AuthLink
+        label="Don't have an account? Sign Up"
+        onPress={() => router.push('/auth/register')}
+        disabled={loading}
+      />
+    </AuthScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.background,
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 24,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: Colors.text,
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: Colors.textSecondary,
-    marginBottom: 32,
-  },
-  form: {
-    gap: 16,
-  },
-  input: {
-    backgroundColor: Colors.card,
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    color: Colors.text,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  button: {
-    backgroundColor: Colors.primary,
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  linkButton: {
-    alignItems: 'center',
-    padding: 8,
-  },
-  linkText: {
-    color: Colors.primary,
-    fontSize: 14,
-  },
-});

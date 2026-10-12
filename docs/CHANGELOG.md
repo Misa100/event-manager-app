@@ -14,3 +14,16 @@
 - **Documentation** : `README.md` réécrit, `BACKEND_IMPLEMENTATION.md` corrigé (chemin du client, variables). Le script `readme` et `scripts/generate-readme.js` sont supprimés : ils auraient écrasé le README.
 
 Non traité volontairement : renommage des fichiers d'icône `natively-dark.png` (le visuel est probablement celui de l'outil Natively et sera à remplacer), dépendances « à confirmer » de `V0_BASELINE.md`.
+
+## Étape 4 – Auth de bout en bout
+
+Détails des parcours et de la configuration : [`AUTH.md`](./AUTH.md).
+
+- **Garde de route** (`Stack.Protected`) : déconnecté → écrans d'auth, connecté → app. L'écran de démarrage reste affiché pendant le chargement de la session.
+- **Accès** : onglet « Profile » ajouté (web/Android et iOS) ; `profile.ios.tsx` (contenu factice) supprimé, le profil réel sert toutes les plateformes ; déconnexion renvoie vers la connexion.
+- **Nouveaux écrans** : mot de passe oublié, nouveau mot de passe (`/reset-password`), confirmation d'e-mail (`/email-confirmed`), état « Check your email » après inscription, renvoi de l'e-mail de confirmation.
+- **Retours visibles sur le web** : les `Alert.alert` (sans effet sur le web) sont remplacés par des messages dans la page ; validations locales (e-mail, 8 caractères min., confirmation) ; erreurs Supabase traduites.
+- **Rôles** : le rôle « Admin » n'est plus proposé à l'inscription ; rôle lu depuis la table `profiles` et exposé par `useAuthContext()` (`role`, `profile`). ⚠️ À verrouiller aussi côté base, voir `AUTH.md`.
+- **Profil** : la ligne `profiles` est lue après connexion, et créée à partir des métadonnées si elle manque ; l'insertion faite pendant l'inscription (sans session, donc refusée par une RLS correcte) est supprimée.
+- **Hygiène** : plus de `console.log` d'adresses e-mail dans `useAuth` ; `useAuth` renvoie des résultats typés (`AuthResult`) au lieu de `any`.
+- **Vérification** : 20 scénarios joués dans Chromium contre un backend Supabase simulé (redirections du garde, erreurs, inscription, connexion, persistance au rechargement, déconnexion, réinitialisation). Non testé contre le vrai projet Supabase (domaine bloqué depuis l'environnement de développement).

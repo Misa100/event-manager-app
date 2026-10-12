@@ -1,20 +1,32 @@
-
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase/client';
 import { SITE_URL } from '../lib/config';
-import { Session, User } from '@supabase/supabase-js';
-import { Alert } from 'react-native';
+import {
+  AuthResult,
+  EMAIL_NOT_CONFIRMED,
+  friendlyAuthError,
+  toRole,
+  toSelfServiceRole,
+} from '../lib/auth';
+import type { Tables } from '../lib/supabase/types';
+import type { UserRole } from '../types';
+
+export type Profile = Tables<'profiles'>;
+
+const unexpected = (): AuthResult => ({
+  success: false,
+  error: 'Something went wrong. Please try again.',
+});
 
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log('[useAuth] Initializing auth state');
-    
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('[useAuth] Session retrieved:', session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -23,7 +35,6 @@ export function useAuth() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('[useAuth] Auth state changed:', _event, session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -32,133 +43,187 @@ export function useAuth() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, name: string, role: string) => {
-    try {
-      console.log('[useAuth] Signing up user:', email);
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${SITE_URL}/email-confirmed`,
-          data: {
-            name,
-            role,
-          },
-        },
-      });
+  // Load the profiles row of the signed-in user. If it does not exist yet (e.g. the
+  // account was created while e-mail confirmation was pending), create it from the
+  // sign-up metadata. `userId` is a primitive so token refreshes do not re-run this.
+  const userId = user?.id;
+  const userEmail = user?.email ?? '';
+  const metaName = typeof user?.user_metadata?.name === 'string' ? user.user_metadata.name : '';
+  const metaRole = user?.user_metadata?.role;
+  useEffect(() => {
+    if (!userId) {
+      setProfile(null);
+      return;
+    }
 
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (cancelled) return;
       if (error) {
-        console.error('[useAuth] Sign up error:', error);
-        Alert.alert('Sign Up Error', error.message);
-        return { success: false, error };
+        console.error('[useAuth] Profile fetch error:', error.message);
+        return;
+      }
+      if (data) {
+        setProfile(data);
+        return;
       }
 
-      if (data.user) {
-        console.log('[useAuth] User signed up successfully:', data.user.email);
-        
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: data.user.id,
-            name,
-            email,
-            role,
-          });
+      const { data: created, error: insertError } = await supabase
+        .from('profiles')
+        .insert({
+          id: userId,
+          email: userEmail,
+          name: metaName || userEmail,
+          role: toSelfServiceRole(metaRole),
+        })
+        .select()
+        .maybeSingle();
 
-        if (profileError) {
-          console.error('[useAuth] Profile creation error:', profileError);
+      if (cancelled) return;
+      if (insertError) {
+        console.error('[useAuth] Profile creation error:', insertError.message);
+        return;
+      }
+      setProfile(created);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, userEmail, metaName, metaRole]);
+
+  const signUp = useCallback(
+    async (email: string, password: string, name: string, role: string): Promise<AuthResult> => {
+      try {
+        const { data, error } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          options: {
+            emailRedirectTo: `${SITE_URL}/email-confirmed`,
+            data: { name: name.trim(), role: toSelfServiceRole(role) },
+          },
+        });
+
+        if (error) {
+          return { success: false, error: friendlyAuthError(error) };
         }
 
-        Alert.alert(
-          'Registration Successful',
-          'Please check your email to verify your account before signing in.',
-          [{ text: 'OK' }]
-        );
+        // For an already registered address Supabase answers with an obfuscated user
+        // that has no identities (to avoid leaking which e-mails exist).
+        if (data.user && data.user.identities?.length === 0) {
+          return { success: false, error: 'An account with this email already exists.' };
+        }
+
+        return { success: true, needsEmailConfirmation: !data.session };
+      } catch (err) {
+        console.error('[useAuth] Sign up exception:', err);
+        return unexpected();
       }
+    },
+    [],
+  );
 
-      return { success: true, data };
-    } catch (error) {
-      console.error('[useAuth] Sign up exception:', error);
-      Alert.alert('Error', 'An unexpected error occurred during sign up');
-      return { success: false, error };
-    }
-  };
-
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string): Promise<AuthResult> => {
     try {
-      console.log('[useAuth] Signing in user:', email);
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
         password,
       });
 
       if (error) {
-        console.error('[useAuth] Sign in error:', error);
-        Alert.alert('Sign In Error', error.message);
-        return { success: false, error };
+        return {
+          success: false,
+          error: friendlyAuthError(error),
+          ...(error.code === EMAIL_NOT_CONFIRMED ? { needsEmailConfirmation: true } : {}),
+        };
       }
-
-      console.log('[useAuth] User signed in successfully:', data.user?.email);
-      Alert.alert('Success', 'You have been signed in successfully');
-      return { success: true, data };
-    } catch (error) {
-      console.error('[useAuth] Sign in exception:', error);
-      Alert.alert('Error', 'An unexpected error occurred during sign in');
-      return { success: false, error };
-    }
-  };
-
-  const signOut = async () => {
-    try {
-      console.log('[useAuth] Signing out user');
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error('[useAuth] Sign out error:', error);
-        Alert.alert('Sign Out Error', error.message);
-        return { success: false, error };
-      }
-
-      console.log('[useAuth] User signed out successfully');
-      Alert.alert('Success', 'You have been signed out');
       return { success: true };
-    } catch (error) {
-      console.error('[useAuth] Sign out exception:', error);
-      Alert.alert('Error', 'An unexpected error occurred during sign out');
-      return { success: false, error };
+    } catch (err) {
+      console.error('[useAuth] Sign in exception:', err);
+      return unexpected();
     }
-  };
+  }, []);
 
-  const resetPassword = async (email: string) => {
+  const signOut = useCallback(async (): Promise<AuthResult> => {
     try {
-      console.log('[useAuth] Resetting password for:', email);
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        return { success: false, error: friendlyAuthError(error) };
+      }
+      return { success: true };
+    } catch (err) {
+      console.error('[useAuth] Sign out exception:', err);
+      return unexpected();
+    }
+  }, []);
+
+  const resetPassword = useCallback(async (email: string): Promise<AuthResult> => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
         redirectTo: `${SITE_URL}/reset-password`,
       });
-
       if (error) {
-        console.error('[useAuth] Password reset error:', error);
-        Alert.alert('Password Reset Error', error.message);
-        return { success: false, error };
+        return { success: false, error: friendlyAuthError(error) };
       }
-
-      console.log('[useAuth] Password reset email sent');
-      Alert.alert('Success', 'Password reset email sent. Please check your inbox.');
       return { success: true };
-    } catch (error) {
-      console.error('[useAuth] Password reset exception:', error);
-      Alert.alert('Error', 'An unexpected error occurred');
-      return { success: false, error };
+    } catch (err) {
+      console.error('[useAuth] Password reset exception:', err);
+      return unexpected();
     }
-  };
+  }, []);
+
+  const updatePassword = useCallback(async (password: string): Promise<AuthResult> => {
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) {
+        return { success: false, error: friendlyAuthError(error) };
+      }
+      return { success: true };
+    } catch (err) {
+      console.error('[useAuth] Password update exception:', err);
+      return unexpected();
+    }
+  }, []);
+
+  const resendConfirmation = useCallback(async (email: string): Promise<AuthResult> => {
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email.trim(),
+        options: { emailRedirectTo: `${SITE_URL}/email-confirmed` },
+      });
+      if (error) {
+        return { success: false, error: friendlyAuthError(error) };
+      }
+      return { success: true };
+    } catch (err) {
+      console.error('[useAuth] Resend confirmation exception:', err);
+      return unexpected();
+    }
+  }, []);
+
+  // Role shown in the UI: the profiles row is the source of truth, the sign-up
+  // metadata is only a fallback while it loads. Never trusted for authorization:
+  // access control is enforced by Row Level Security.
+  const role: UserRole | null = user ? toRole(profile?.role ?? user.user_metadata?.role) : null;
 
   return {
     session,
     user,
+    profile,
+    role,
     loading,
     signUp,
     signIn,
     signOut,
     resetPassword,
+    updatePassword,
+    resendConfirmation,
   };
 }

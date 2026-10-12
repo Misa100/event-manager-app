@@ -19,7 +19,7 @@ Identité : « Event Manager » (voir `CHANGELOG.md` ; à la v0 le projet portai
 
 ```
 app/                         Routes (expo-router)
-├── _layout.tsx              Racine : <AuthProvider> + Stack
+├── _layout.tsx              Racine : <AuthProvider> + Stack avec garde de route (Stack.Protected)
 ├── (tabs)/
 │   ├── _layout.tsx          Web/Android : Stack + FloatingTabBar maison
 │   ├── _layout.ios.tsx      iOS : NativeTabs (barre d'onglets native)
@@ -31,19 +31,22 @@ app/                         Routes (expo-router)
 │   ├── providers.tsx        Liste + filtre par type + détail des prestataires
 │   ├── venues.tsx           Liste + détail des lieux
 │   ├── events.tsx           Liste + détail des événements
-│   ├── profile.tsx          Profil de l'utilisateur connecté (non listé dans les onglets)
-│   └── profile.ios.tsx      Profil iOS (contenu statique du template)
+│   └── profile.tsx          Profil de l'utilisateur connecté (6ᵉ onglet)
 ├── auth/
 │   ├── login.tsx
-│   └── register.tsx
+│   ├── register.tsx
+│   └── forgot-password.tsx
+├── reset-password.tsx       Cible du lien e-mail de réinitialisation
+├── email-confirmed.tsx      Cible du lien e-mail de confirmation
 ├── modal.tsx                Démos de modales (template)
 ├── formsheet.tsx
 └── transparent-modal.tsx
 
-components/                  Composants partagés (voir §6)
+components/                  Composants partagés (voir §6), dont AuthUI.tsx (écrans d'auth)
 contexts/                    AuthContext (utilisé), WidgetContext (template, inutilisé)
 hooks/                       useAuth + hooks de données Supabase (voir DATA_MODEL.md)
 lib/config.ts                Variables d'environnement EXPO_PUBLIC_*
+lib/auth.ts                  Rôles, validation, messages d'erreur d'auth
 lib/supabase/                client.ts (instance Supabase), types.ts (types générés)
 types/index.ts               Types métier côté UI (camelCase, objets imbriqués)
 data/mockData.ts             Données factices alimentant les écrans métier
@@ -59,12 +62,12 @@ Point d'entrée : `index.ts` → `expo-router/entry`.
 
 ## 3. Navigation
 
-- **Racine** (`app/_layout.tsx`) : un `Stack` sans en-tête qui déclare `(tabs)`, `auth/login`, `auth/register` et trois modales (`modal`, `formsheet`, `transparent-modal`).
-- **Onglets** : Home, Clients, Providers, Venues, Events.
+- **Racine** (`app/_layout.tsx`) : un `Stack` sans en-tête, découpé par `Stack.Protected` : `(tabs)` et les trois modales (`modal`, `formsheet`, `transparent-modal`) pour les utilisateurs connectés ; `auth/*` pour les déconnectés ; `reset-password` et `email-confirmed` pour tous. Voir `AUTH.md`.
+- **Onglets** : Home, Clients, Providers, Venues, Events, Profile.
   - Web/Android : le layout `(tabs)/_layout.tsx` est un `Stack` (`animation: 'none'`) sur lequel est posé le composant `FloatingTabBar` (barre flottante floutée, animée, qui calcule l'onglet actif depuis `usePathname()`).
   - iOS : `_layout.ios.tsx` utilise `NativeTabs` d'expo-router (API instable `unstable-native-tabs`) avec des icônes SF Symbols.
 - **Écrans « liste → détail »** : Clients, Providers, Venues et Events n'ont pas de route de détail. Chaque écran garde un état local `selected…` et affiche soit la liste, soit le détail, avec un bouton « Back to … ». Conséquence : pas d'URL par élément, donc pas de lien direct ni de bouton retour navigateur.
-- **Auth** : `auth/login` redirige vers `/(tabs)` après connexion. Aucun écran n'y renvoie aujourd'hui et il n'y a pas de garde de route (l'app s'ouvre sans login).
+- **Auth** : le garde de route renvoie les déconnectés vers `auth/login` et, après connexion, l'utilisateur est envoyé sur l'accueil.
 
 ## 4. Variantes par plateforme
 
@@ -74,18 +77,13 @@ Le résolveur Babel (`module-resolver`) et Metro choisissent les fichiers `.ios.
 |---|---|---|
 | `(tabs)/_layout` | `NativeTabs` | `Stack` + `FloatingTabBar` |
 | `(tabs)/(home)/index` | démo du template (« Building the app… », liste des modales) | écran d'accueil réel |
-| `(tabs)/profile` | contenu statique (« John Doe ») | profil réel via `useAuthContext` |
 | `components/IconSymbol` | `expo-symbols` (SF Symbols) | `MaterialIcons` |
 
-À retenir pour le portage mobile : **l'iOS n'affiche pas aujourd'hui les mêmes écrans que le web** pour Home et Profile.
+À retenir pour le portage mobile : **l'iOS n'affiche pas aujourd'hui le même écran d'accueil que le web** (démo du template). Le profil, lui, est commun aux deux.
 
 ## 5. Authentification
 
-- `hooks/useAuth.ts` encapsule Supabase Auth : `getSession()` au montage, abonnement `onAuthStateChange`, et les actions `signUp`, `signIn`, `signOut`, `resetPassword`. Les retours utilisateur passent par `Alert.alert`.
-- `signUp` envoie `name` et `role` dans les métadonnées Supabase, puis insère une ligne dans `profiles`.
-- `contexts/AuthContext.tsx` expose le hook via `AuthProvider` / `useAuthContext()` (monté à la racine).
-- La session est persistée avec AsyncStorage (`lib/supabase/client.ts`).
-- Les URL de redirection e-mail (`emailRedirectTo`, `redirectTo`) pointent vers `natively.dev`.
+Voir [`AUTH.md`](./AUTH.md) : parcours, garde de route, code, configuration Supabase, sécurité et limites.
 
 ## 6. Composants
 
@@ -94,6 +92,7 @@ Le résolveur Babel (`module-resolver`) et Metro choisissent les fichiers `.ios.
 | `FloatingTabBar` | Barre d'onglets flottante (web/Android) | `(tabs)/_layout.tsx` |
 | `IconSymbol` (+ `.ios`) | Icône multiplateforme (SF Symbols / Material) | tous les écrans |
 | `DemoCard`, `HeaderButtons`, `homeData` | Démo de modales du template | `index.ios.tsx` |
+| `AuthUI` | Gabarit et briques des écrans d'authentification | `auth/*`, `reset-password`, `email-confirmed` |
 | `ListItem`, `IconCircle`, `button`, `BodyScrollView` | Briques génériques du template | `ListItem` → `IconCircle` ; les autres ne sont importées nulle part |
 
 Les écrans métier ne réutilisent pas ces briques : chacun définit ses propres `StyleSheet` locaux.

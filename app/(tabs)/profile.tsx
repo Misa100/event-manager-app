@@ -1,66 +1,35 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  ActivityIndicator,
 } from 'react-native';
-import { useRouter } from 'expo-router';
 import { useAuthContext } from '@/contexts/AuthContext';
+import { ROLE_LABELS } from '@/lib/auth';
 import { Colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 
 export default function ProfileScreen() {
-  const router = useRouter();
-  const { user, loading, signOut } = useAuthContext();
+  const { user, profile, role, signOut } = useAuthContext();
+  const [signOutError, setSignOutError] = useState<string | null>(null);
 
+  // On success the route guard in app/_layout.tsx sends the user back to the sign-in screen.
   const handleSignOut = async () => {
-    console.log('[ProfileScreen] Signing out');
-    await signOut();
-    router.replace('/auth/login');
+    setSignOutError(null);
+    const result = await signOut();
+    if (!result.success) {
+      setSignOutError(result.error ?? 'Unable to sign out.');
+    }
   };
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
-    );
+  if (!user) {
+    return null;
   }
 
-  if (!user) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.content}>
-          <IconSymbol
-            ios_icon_name="person.circle"
-            android_material_icon_name="account-circle"
-            size={80}
-            color={Colors.textSecondary}
-          />
-          <Text style={styles.title}>Not Signed In</Text>
-          <Text style={styles.subtitle}>
-            Sign in to access your profile and manage events
-          </Text>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => router.push('/auth/login')}
-          >
-            <Text style={styles.buttonText}>Sign In</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={() => router.push('/auth/register')}
-          >
-            <Text style={styles.secondaryButtonText}>Create Account</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
+  const displayName = profile?.name || user.user_metadata?.name || user.email;
 
   return (
     <ScrollView style={styles.container}>
@@ -73,8 +42,8 @@ export default function ProfileScreen() {
             color={Colors.primary}
           />
         </View>
-        <Text style={styles.name}>{user.email}</Text>
-        <Text style={styles.email}>{user.user_metadata?.name || 'User'}</Text>
+        <Text style={styles.name}>{displayName}</Text>
+        <Text style={styles.email}>{user.email}</Text>
       </View>
 
       <View style={styles.section}>
@@ -89,7 +58,7 @@ export default function ProfileScreen() {
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Role</Text>
             <Text style={styles.infoValue}>
-              {user.user_metadata?.role || 'Client'}
+              {role ? ROLE_LABELS[role] : ''}
             </Text>
           </View>
           
@@ -137,6 +106,7 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.section}>
+        {signOutError ? <Text style={styles.errorText}>{signOutError}</Text> : null}
         <TouchableOpacity
           style={styles.signOutButton}
           onPress={handleSignOut}
@@ -161,11 +131,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.background,
+  errorText: {
+    color: Colors.error,
+    fontSize: 14,
+    marginBottom: 12,
+    textAlign: 'center',
   },
   content: {
     flex: 1,
