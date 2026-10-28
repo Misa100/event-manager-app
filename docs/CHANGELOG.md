@@ -40,3 +40,8 @@ Détails : [`DATA_MODEL.md`](./DATA_MODEL.md) §3 et §4.
 - **Suppression** de `data/mockData.ts` (plus utilisé).
 - **Vérification** : 19 scénarios dans Chromium contre un backend simulé au format PostgREST (jointures imbriquées, colonnes `null`, valeurs inconnues, tri, erreur puis nouvel essai, liste vide). Non testé contre le vrai projet Supabase (domaine inaccessible depuis l'environnement de développement) : les noms de colonnes et les relations viennent de `lib/supabase/types.ts`.
 - **À savoir** : base vide = écrans vides ; les lectures dépendent des politiques RLS (lecture ouverte aux utilisateurs authentifiés d'après `BACKEND_IMPLEMENTATION.md`, non vérifié).
+
+## Correctif – installation et démarrage
+
+- `babel-preset-expo` déclaré en `devDependencies` : `babel.config.js` l'utilise, mais il n'était présent que comme dépendance indirecte d'`expo`, et selon l'arbre npm il n'était pas résolu (« Cannot find module 'babel-preset-expo' »).
+- Versions alignées sur celles qu'attend Expo SDK 54 (`react-native` 0.81.5, `react-native-gesture-handler`, `react-native-maps`, `react-native-safe-area-context`, `react-native-webview`, `@react-native-picker/picker`, `@react-native-community/datetimepicker`) : les anciens `^` installaient des versions plus récentes que celles validées par Expo.
